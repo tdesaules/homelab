@@ -1,0 +1,15 @@
+DRC Rules Export File for PCB: C:\Users\Public\Documents\Altium\GERTRUDE\PCB.PcbDoc
+RuleKind=Clearance|RuleName=Clearance_7_24V_poly|Scope=Board|Minimum=9.45
+RuleKind=Clearance|RuleName=Clearance_DC_IN|Scope=Board|Minimum=9.45
+RuleKind=Width|RuleName=Width_50R|Scope=Board|Minimum=3.54
+RuleKind=Width|RuleName=Width_ADV7535|Scope=Board|Minimum=2.50
+RuleKind=ShortCircuit|RuleName=ShortCircuit_ant|Scope=Board|Allowed=1
+RuleKind=Clearance|RuleName=Clearance_ADV7535BCBZ-RL|Scope=Board|Minimum=3.30
+RuleKind=Width|RuleName=WIDTH_TMUX646ZECR|Scope=Board|Minimum=3.00
+RuleKind=Clearance|RuleName=CLEARANCE_TMUX646ZECR|Scope=Board|Minimum=3.00
+RuleKind=Width|RuleName=WIDTH_MIN|Scope=Board|Minimum=3.30
+RuleKind=MinimumAnnularRing|RuleName=MinimumAnnularRing|Scope=Board|Minimum=2.76
+RuleKind=ShortCircuit|RuleName=ShortCircuit|Scope=Board|Allowed=0
+RuleKind=SolderMaskExpansion|RuleName=SolderMaskExpansion|Scope=Board|Minimum=1.97
+RuleKind=SolderMaskExpansion|RuleName=VIAtented|Scope=Board|Minimum=4.00
+RuleKind=Clearance|RuleName=CLEARANCE_MIN|Scope=Board|Minimum=3.94

@@ -1,0 +1,13 @@
+Layer Pairs Export File for PCB: C:\Users\Public\Documents\Altium\GERTRUDE\PCB.PcbDoc
+LayersSetName=Top_Bot_Plated_Thru_Holes|DrillFile=pcb-roundholes-plated.txt|DrillLayers=gtl,g1,g2,g3,g4,g5,g6,g7,g8,gbl
+LayersSetName=Top_Bot_Plated_Slot_Holes|DrillFile=pcb-slotholes-plated.txt|DrillLayers=gtl,g1,g2,g3,g4,g5,g6,g7,g8,gbl
+LayersSetName=Top_Bot_NonPlated_Thru_Holes|DrillFile=pcb-roundholes-nonplated.txt|DrillLayers=gtl,g1,g2,g3,g4,g5,g6,g7,g8,gbl
+LayersSetName=TOP_L1_L2_Blind_Vias|DrillFile=pcb-roundholes-plated.tx1|DrillLayers=gtl,g1
+LayersSetName=L2_L3_Buried_Vias|DrillFile=pcb-roundholes-plated.tx3|DrillLayers=g1,g2
+LayersSetName=L3_L8_Buried_Vias|DrillFile=pcb-roundholes-plated.tx5|DrillLayers=g2,g3,g4,g5,g6,g7
+LayersSetName=L8_L9_Buried_Vias|DrillFile=pcb-roundholes-plated.tx6|DrillLayers=g7,g8
+LayersSetName=L9_BOTTOM_L10_Blind_Vias|DrillFile=pcb-roundholes-plated.tx8|DrillLayers=g8,gbl
+LayersSetName=TOP_L1_L2_Blind_Vias|DrillFile=pcb-roundholes-plated.tx11|DrillLayers=gtl,g1
+LayersSetName=L2_L3_Buried_Vias|DrillFile=pcb-roundholes-plated.tx13|DrillLayers=g1,g2
+LayersSetName=L8_L9_Buried_Vias|DrillFile=pcb-roundholes-plated.tx16|DrillLayers=g7,g8
+LayersSetName=L9_BOTTOM_L10_Blind_Vias|DrillFile=pcb-roundholes-plated.tx18|DrillLayers=g8,gbl

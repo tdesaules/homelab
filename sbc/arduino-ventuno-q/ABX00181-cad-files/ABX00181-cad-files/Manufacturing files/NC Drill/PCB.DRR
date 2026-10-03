@@ -1,0 +1,116 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: PCB.PcbDoc   8/13/2026  3:04:37 PM
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : TOP_L1 to BOTTOM_L10
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TXT
+ASCII Non-Plated RoundHoles File : PCB-RoundHoles-NonPlated.TXT
+ASCII Plated SlotHoles File : PCB-SlotHoles-Plated.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T3      0.3mm (12mil)                                             Round             600       PTH        1676.66mm (66.01inch)
+T4      0.6mm (24mil)           +0.2mm (8mil)/-0mm (0mil)         Round             19        PTH        20.88mm (0.82inch)
+T5      0.6mm (24mil)                                             Slot              4         PTH        49.88mm (1.96inch)
+T6      0.7mm (28mil)                                             Round             18        PTH        36.50mm (1.44inch)
+T7      0.7mm (28mil)                                             Slot              5         PTH        196.86mm (7.75inch)
+T8      0.8mm (31mil)                                             Slot              2         PTH        18.97mm (0.75inch)
+T9      0.89mm (35mil)          +0.2mm (8mil)/-0mm (0mil)         Round             12        PTH        31.86mm (1.25inch)
+T10     0.9mm (35mil)           +0.2mm (8mil)/-0mm (0mil)         Slot              4         PTH        61.35mm (2.42inch)
+T11     1.02mm (40mil)                                            Round             32        PTH        128.52mm (5.06inch)
+T12     1.27mm (50mil)          +0.2mm (8mil)/-0mm (0mil)         Round             5         PTH        22.66mm (0.89inch)
+T13     1.3mm (51mil)           +0.3mm (12mil)/-0mm (0mil)        Round             5         PTH        20.00mm (0.79inch)
+T14     1.6mm (63mil)           +0.2mm (8mil)/-0mm (0mil)         Round             2         PTH        17.58mm (0.69inch)
+T15     3mm (118mil)                                              Round             1         PTH        0.00mm (0.00inch)
+T16     3.7mm (146mil)                                            Round             4         PTH        256.07mm (10.08inch)
+T17     0.9mm (35mil)                                             Round             2         NPTH       4.25mm (0.17inch)
+T18     1.1mm (43mil)                                             Round             1         NPTH       0.00mm (0.00inch)
+T19     1.6mm (63mil)                                             Round             1         NPTH       0.00mm (0.00inch)
+T20     1.7mm (67mil)           +0.2mm (8mil)/-0mm (0mil)         Round             2         NPTH       13.70mm (0.54inch)
+T21     3.2mm (126mil)          +0.2mm (8mil)/-0mm (0mil)         Round             6         NPTH       439.64mm (17.31inch)
+T22     3.25mm (128mil)         +0.2mm (8mil)/-0mm (0mil)         Round             2         NPTH       9.65mm (0.38inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              727
+Layer Pair : TOP_L1 to L2
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX1
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             3         PTH        5.46mm (0.21inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              3
+Layer Pair : L2 to L3
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX3
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             632       PTH        998.77mm (39.32inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              632
+Layer Pair : L3 to L8
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX5
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T2      0.2mm (8mil)                                              Round             1251      PTH        3034.81mm (119.48inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              1251
+Layer Pair : L8 to L9
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX6
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             86        PTH        467.66mm (18.41inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              86
+Layer Pair : L9 to BOTTOM_L10
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX8
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             75        PTH        337.75mm (13.30inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              75
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              2774
+MicroVia : TOP_L1 to L2
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX11
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             3444      PTH        5470.81mm (215.39inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              3444
+MicroVia : L2 to L3
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX13
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             1622      PTH        3234.28mm (127.33inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              1622
+MicroVia : L8 to L9
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX16
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             1589      PTH        3221.98mm (126.85inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              1589
+MicroVia : L9 to BOTTOM_L10
+ASCII Plated RoundHoles File : PCB-RoundHoles-Plated.TX18
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.1mm (4mil)                                              Round             1610      PTH        3192.39mm (125.68inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              1610
+----------------------------------------------------------------------------------------------------------------------------------
+MicroVia Totals                                                                     8265
+
+Two holes at same point : 2
+-----------------------
+764,1349
+764,1460
+
+Total Processing Time (hh:mm:ss) : 00:00:04
