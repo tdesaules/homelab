@@ -307,6 +307,38 @@ module drawer_screw_coupon(thickness,head_diameter=8,head_depth=2.5) {
     }
 }
 
+// Flancs imprimes face interieure sur le plateau : les tenons affleurent cette
+// face et reposent aussi sur le plateau. Quatre tenons de fond 18 x 2 x 1.5 mm.
+// clearance=fit pour les logements ; jeu de colle total 2*fit autour des tenons.
+module drawer_wall_floor_tabs(which,w,wall,front,rear,floor,fit,clearance=0) {
+    assert(which==0 || which==1);
+    assert(wall>=3 && floor>1.5+fit && rear-front>96);
+    x=which==0?wall-2:w-wall;
+    for(i=[0:3]) {
+        y=front+12+i*(rear-front-42)/3;
+        translate([x-clearance,y-clearance,floor-1.5-clearance])
+            cube([2+2*clearance,18+2*clearance,1.5+fit+0.02+2*clearance]);
+    }
+}
+
+// Deux tenons par flanc vers les logements borgnes de la facade, hors rainures.
+module drawer_wall_front_tabs(which,w,wall,front_thickness,floor,fit,
+                              groove_bottom,groove_height,height,clearance=0) {
+    x=which==0?wall-2:w-wall;
+    assert(front_thickness>2+fit);
+    assert(groove_bottom-8>floor+fit && groove_bottom+groove_height+8<height);
+    for(z=[groove_bottom-5,groove_bottom+groove_height+5])
+        translate([x-clearance,front_thickness-2-clearance,z-3-clearance])
+            cube([2+2*clearance,2+fit+0.02+2*clearance,6+2*clearance]);
+}
+
+module drawer_wall_flat(which,w,wall,front_thickness,floor) {
+    multmatrix([[0,1,0,-front_thickness+2],
+                [0,0,1,-floor+1.5],
+                [which==0?-1:1,0,0,which==0?wall:-(w-wall)],
+                [0,0,0,1]]) children();
+}
+
 // Face avant locale Z=0 : insert vers +Z, ergot saillant vers -Z.
 module rack_mount_hole() {
     translate([0,0,-eps])
@@ -522,14 +554,20 @@ module panel_face(f,explode=0) {
     }
 }
 
-module frame() {
+// Eclatement rigide : raccords aux extremites deplaces de 2*explode,
+// demi-barres de explode dans leur longueur et de 2*explode vers l'exterieur.
+// Ainsi chaque tenon sort de sa mortaise sans etirer les pieces.
+module frame(explode=0) {
     for(ix=[0:2],iy=[0:2],iz=[0:2])
         if((ix==1?1:0)+(iy==1?1:0)+(iz==1?1:0)<=1)
-            color("#e8b65d") translate([coords[0][ix],coords[1][iy],coords[2][iz]])
+            color("#e8b65d") translate([coords[0][ix]+2*explode*(ix-1),
+                                       coords[1][iy]+2*explode*(iy-1),
+                                       coords[2][iz]+2*explode*(iz-1)])
                 node(ix,iy,iz);
     for(a=[0:2],e=[0:3],h=[0:1])
         color("#405d70") edge_transform(a,e)
-            translate([B+h*(beam_length(a)+B),0,0]) beam(a,e,h);
+            translate([B+h*(beam_length(a)+B)+(h==0?-explode:explode),
+                       -2*explode,-2*explode]) beam(a,e,h);
 }
 
 module fan_reference() {
@@ -562,7 +600,7 @@ function rack_empty_slots(occupied=[]) =
     [for(i=[0:units-1]) if(len([for(s=occupied) if(s==i) s])==0) i];
 
 module assembly(explode=0,panels=true,fan=true,slots=false,occupied=[]) {
-    frame();
+    frame(explode);
     color("#82aa75") rack_strips(explode);
     if(panels) for(f=["left","right","top","bottom","rear"])
         color([0.7,0.78,0.82,1]) panel_face(f,explode);

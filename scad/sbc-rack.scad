@@ -3,6 +3,7 @@
 // installed : vue d'ensemble avec les modules dessines, pas un STL a imprimer.
 // Cartes, ventilateur et gabarits sont des references visibles avec F5.
 // Les pieces restent exportables separement avec les autres valeurs de part.
+// exploded separe aussi les 24 barres et 20 raccords de l'ossature : tenons visibles.
 // Liaison des panneaux : cinq croix internes 130 x 130 x 2, sans petites cles.
 // Engager les quartiers par leurs chants autour des croix avant de fermer le cadre.
 // Boitier : 73 pieces imprimees hors eprouvettes et tiroirs.
@@ -13,36 +14,34 @@ use <rack-config.scad>
 use <sbc-rack-core.scad>
 use <network-rack.scad>
 use <power-rack.scad>
+use <3u-rack.scad>
+
+/* [Selection] */
+part = "completed"; // [completed,exploded,installed,beam_x,beam_y,beam_z,node_corner,node_x_mid,node_y_mid,node_z_mid,panel_side,panel_top,panel_bottom,panel_rear,rack_strip,cross,cross_coupon,coupon,joint_coupon,module_export]
+// Vu de face : 0=gauche, 1=droite. Croix, coupons et raccords centres en X : piece entiere.
+side = 0; // [0:Gauche,1:Droite]
+// Avant/arriere : barres, raccords non centres en Y, panneaux lateraux/dessus/dessous.
+// Egalement les sections du 3U dans module_export. Sans effet sur les autres pieces.
+segment = 0; // [0:Avant,1:Arriere]
+// Bas/haut : barres, raccords non centres en Z, panneaux lateraux/arriere et rack_strip.
+level = 0; // [0:Bas,1:Haut]
 
 /* [Affichage] */
-part = "assembly"; // [assembly,installed,exploded,beam,node,panel,rack_strip,cross,cross_coupon,coupon,joint_coupon,module_export]
 show_fan = true;
 show_slots = false; // gabarits des emplacements libres dans la vue installed
 show_panels = true;
-// Barre : axis 0=X, 1=Y, 2=Z ; edge 0..3 ; half 0..1.
-// Bande rack_strip : half 0=segment bas, 1=haut ; deux exemplaires de chaque.
-axis = 0;
-edge = 0;
-half = 0;
-// Pour un noeud : coordonnees 0, 1, 2 sur chaque axe (coin ou milieu d'arete).
-node_x = 0;
-node_y = 0;
-node_z = 0;
-// Panneaux : deux colonnes x deux rangees par face.
-face = "left"; // [left,right,top,bottom,rear]
-column = 0; // [0,1]
-row = 0; // [0,1]
 
 /* [Modules installes] */
 show_network = true;
 show_power = true;
 show_module_boards = true;
 show_module_hardware = true;
+compute_layout = "3u"; // [none,3u]
 
 /* [Export des modules] */
-module_name = "network"; // [network,power]
-module_part = "body"; // [body,front,floor_key,front_key,coupon,key_coupon]
-module_side = 0; // [0,1]
+module_name = "network"; // [network,power,3u]
+module_part = "floor"; // [floor,ceiling,side_panel,front,mount_bar,floor_key,ceiling_key,front_key,joint_key,coupon,key_coupon]
+// side=gauche/droite ; segment=avant/arriere pour les pieces du 3U.
 
 /* [Configuration] */
 // false : profil commun rack-config.scad. true : utiliser les reglages ci-dessous.
@@ -151,7 +150,8 @@ echo("Configuration active",use_local_rack_settings ? "Customizer local" : "rack
 // Ajouter ici les futurs modules et leur rendu, sans dupliquer leurs cotes.
 function installed_module_registry() =
     concat(show_network ? [["network",network_slot_index()]] : [],
-           show_power ? [["power",power_slot_index()]] : []);
+           show_power ? [["power",power_slot_index()]] : [],
+           compute_layout=="3u" ? [for(i=three_u_slots()) ["compute",i]] : []);
 function installed_module_slots() = [for(entry=installed_module_registry()) entry[1]];
 
 module installed_slots_validate() {
@@ -171,6 +171,7 @@ module installed_modules() {
             network_installed(boards=show_module_boards,hardware=show_module_hardware,envelopes=false);
         if(entry[0]=="power")
             power_installed(boards=show_module_boards,hardware=show_module_hardware,envelopes=false);
+        if(entry[0]=="compute" && entry[1]==0) three_u_installed(show_module_boards);
     }
 }
 
@@ -179,18 +180,51 @@ module installed_assembly() {
     installed_modules();
 }
 
-assert(part=="assembly" || part=="installed" || part=="exploded" || part=="beam"
-       || part=="node" || part=="panel" || part=="rack_strip" || part=="cross"
+// Chaque famille donne une seule piece imprimable. Les variantes gauche/droite
+// correspondent aux pieces reelles, pas a une coupe arbitraire de leur geometrie.
+module selected_rack_component() {
+    if(part=="beam_x") rack_export("beam",a=0,e=2*level+segment,h=side);
+    if(part=="beam_y") rack_export("beam",a=1,e=2*level+side,h=segment);
+    if(part=="beam_z") rack_export("beam",a=2,e=2*segment+side,h=level);
+    if(part=="node_corner") rack_export("node",ix=2*side,iy=2*segment,iz=2*level);
+    if(part=="node_x_mid") rack_export("node",ix=1,iy=2*segment,iz=2*level);
+    if(part=="node_y_mid") rack_export("node",ix=2*side,iy=1,iz=2*level);
+    if(part=="node_z_mid") rack_export("node",ix=2*side,iy=2*segment,iz=1);
+    if(part=="panel_side") rack_export("panel",f=side==0?"left":"right",c=segment,r=level);
+    if(part=="panel_top" || part=="panel_bottom")
+        rack_export("panel",f=part=="panel_top"?"top":"bottom",c=side,r=segment);
+    if(part=="panel_rear") rack_export("panel",f="rear",c=side,r=level);
+    if(part=="rack_strip") {
+        if(side==0) rack_export("rack_strip",h=level);
+        // La bande droite est le miroir physique de la gauche ; garder X positif.
+        else translate([rack_setting("groove_depth")+rack_value("ear_width")
+                        -rack_value("chassis_clearance"),0,0])
+            mirror([1,0,0]) rack_export("rack_strip",h=level);
+    }
+    if(part=="cross" || part=="cross_coupon" || part=="coupon" || part=="joint_coupon")
+        rack_export(part);
+}
+
+assert(side==0 || side==1,"side : 0=gauche, 1=droite");
+assert(compute_layout=="none" || compute_layout=="3u");
+assert(level==0 || level==1);
+assert(segment==0 || segment==1);
+assert(part=="completed" || part=="installed" || part=="exploded"
+       || part=="beam_x" || part=="beam_y" || part=="beam_z"
+       || part=="node_corner" || part=="node_x_mid" || part=="node_y_mid" || part=="node_z_mid"
+       || part=="panel_side" || part=="panel_top" || part=="panel_bottom" || part=="panel_rear"
+       || part=="rack_strip" || part=="cross"
        || part=="cross_coupon" || part=="coupon" || part=="joint_coupon"
        || part=="module_export","Selection inconnue");
 rack_validate() {
-    if(part=="assembly") assembly(panels=show_panels,fan=show_fan,slots=show_slots);
+    if(part=="completed") assembly(panels=show_panels,fan=show_fan,slots=show_slots);
     if(part=="installed") installed_assembly();
-    if(part=="exploded") assembly(35,panels=show_panels,fan=show_fan,slots=show_slots);
-    rack_export(part,axis,edge,half,node_x,node_y,node_z,face,column,row);
+    if(part=="exploded") assembly(35,panels=show_panels,fan=false,slots=false);
+    selected_rack_component();
     if(part=="module_export") installed_slots_validate() {
-        assert(module_name=="network" || module_name=="power","Module inconnu");
-        if(module_name=="network") network_export(module_part,module_side);
-        if(module_name=="power") power_export(module_part,module_side);
+        assert(module_name=="network" || module_name=="power" || module_name=="3u","Module inconnu");
+        if(module_name=="network") network_export(module_part,side);
+        if(module_name=="power") power_export(module_part,side);
+        if(module_name=="3u") three_u_export(module_part,side,segment);
     }
 }

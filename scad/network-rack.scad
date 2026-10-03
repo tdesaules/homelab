@@ -1,18 +1,21 @@
 // Tiroir reseau superieur pour sbc-rack.scad, mm. PLA, assemblage colle.
 // X=largeur du corps, Y=profondeur depuis la face avant, Z=bas du tiroir.
-// Imprimer body side=0/1, front side=0/1, une floor_key et une front_key : six pieces.
+// Imprimer floor, side_panel, front avec side=0/1, puis floor_key et front_key : huit pieces.
 // En autonomie : profil commun rack-config.scad. Pour les reglages locaux du
 // boitier, exporter depuis sbc-rack.scad avec part="module_export", module_name="network".
 // Assembler les deux fonds autour de leur cle longue, puis les deux facades pareillement.
-// Jamais assembly/installed. key_coupon teste les deux jonctions a pleine longueur.
-// Coller la facade sur les trois languettes du fond et les chants des parois.
+// Jamais completed/exploded/installed. key_coupon teste les deux jonctions a pleine longueur.
+// Coller les demi-fonds autour de leur cle, inserer les flancs par le haut,
+// puis enfiler la facade assemblee sur les trois languettes du fond et celles des flancs.
+// Les flancs s'impriment a plat, rainures vers le haut ; rebord arriere integre au fond.
 // Coller le tiroir hors du boitier, sans colle dans ses rainures de guidage.
 // Tester coupon avant de visser les entretoises M2.5 directement dans le PLA.
 // Controler dans le slicer les ponts des logements de cles et les petites
 // languettes avant ; supports localises possibles sous ces dernieres.
 // Materiel : 8 entretoises M2.5 (corps 20 + male 6), 8 vis M2.5 pour les cartes
 // superieures (longueur a adapter aux entretoises), 2 vis M3 de facade.
-// Les extremites des ports entrent de 1 mm dans la facade (retrait exterieur 3 mm).
+// Le bord avant des PCB affleure la face interieure de la facade.
+// Les ports depassent de 2 mm du PCB : retrait exterieur nominal de 2 mm.
 // Les acces USB-C de 11 x 7, rayon 1,
 // sont prevus pour les fiches mesurees de 10 x 6 mm.
 // Cotes utiles cote interieur ; entrees evasees depuis Y=0 sur 3 mm.
@@ -25,9 +28,11 @@
 // d'affichage sbc-rack.scad, qui peut donc afficher ce module a son tour.
 use <sbc-rack-core.scad>
 
+/* [Selection] */
+part = "completed"; // [completed,exploded,installed,floor,side_panel,front,floor_key,front_key,coupon,key_coupon]
+// Vu de face : 0=gauche, 1=droite pour floor/side_panel/front. Cles et coupons entiers.
+side = 0; // [0:Gauche,1:Droite]
 /* [Affichage] */
-part = "assembly"; // [assembly,installed,exploded,body,front,floor_key,front_key,coupon,key_coupon]
-side = 0; // [0,1]
 show_boards = true;
 show_envelopes = false;
 show_hardware = true;
@@ -38,8 +43,9 @@ body_depth = 175; // derriere la facade : profondeur totale 179 mm
 floor_thickness = 3;
 rear_lip_height = 8;
 front_edge_clearance = 0.2;
-join_fit = 0.15; // jeu total de collage, a calibrer en PLA
-join_x = 72.5; // jonction dans l'espace entre les piles
+join_fit = 0.15; // jeu total des coupes, par face des logements ; a calibrer en PLA
+join_x = 72.5; // jonction du fond dans l'espace entre les piles
+front_join_x = 66.5; // jonction de facade decalee pour degager les LED des switchs
 board_edge_clearance = 2;
 
 /* [Cles longues a coller] */
@@ -47,7 +53,7 @@ floor_key_length = 130; // suivant Y, de Y=20 a Y=150 au nominal
 floor_key_width = 6; // evite les pieds des bossages voisins
 floor_key_start = 20;
 front_key_height = 40; // centree en hauteur sur la facade
-front_key_width = 12;
+front_key_width = 8;
 key_thickness = 1.2;
 key_corner_radius = 0.5;
 
@@ -80,6 +86,14 @@ switch_envelope = 15; // depuis le dessous du PCB, avant correction des ports
 switch_ports_x = 10;
 switch_ports_width = 128;
 switch_ports_height = 14;
+switch_led_x = 0; // HYPOTHESE : zone LED alignee sur le bord gauche du PCB
+switch_led_z = 0; // HYPOTHESE : depuis le dessus du PCB
+switch_led_width = 6;
+switch_led_height = 13;
+switch_reset_edge = 1; // du bord droit du PCB au bord droit du boitier 6x6
+switch_reset_z = 1; // du dessus du PCB au bas du boitier
+switch_reset_size = 6;
+switch_reset_diameter = 3; // bouton au centre du boitier
 
 /* [Orange Pi R1 Plus LTS] */
 orange_width = 57;
@@ -97,7 +111,7 @@ orange_side_usb = 3; // depassement a gauche, aucun acces lateral demande
 
 /* [Acces et cables] */
 port_overhang = 2; // commun aux deux cartes, vers l'avant du PCB
-connector_inset = 1; // extremites USB-C/Ethernet dans l'epaisseur de facade
+pcb_front_clearance = 0; // recul du PCB depuis la face interieure ; 0=affleurement maximal
 port_clearance = 0.5;
 usb_c_plug_width = 11; // ouverture pour le corps de fiche mesure a 10 x 6
 usb_c_plug_height = 7;
@@ -127,14 +141,14 @@ groove_bottom = mount_z-groove_height/2;
 rear_y = front_thickness+body_depth;
 body_front = front_thickness+join_fit;
 ear = rack_value("ear_width")-front_edge_clearance;
-board_front = front_thickness+port_overhang-connector_inset;
+board_front = front_thickness+pcb_front_clearance;
 orange_x = wall+orange_side_usb+board_edge_clearance;
 switch_x = body_width-wall-board_edge_clearance-switch_width;
 power_x = switch_x+switch_width/2;
 power_y = (board_front+switch_depth+rear_y)/2;
 front_key_z = (drawer_height-front_key_height)/2;
 // Conserver la bande pleine existante autour de la jonction commune.
-joint_support_width = max(floor_key_width,front_key_width)+2*join_fit+2*vent_support_margin;
+joint_support_width = max(floor_key_width,12)+2*join_fit+2*vent_support_margin;
 front_tab_width = 6;
 front_tab_thickness = 1.4;
 front_tab_depth = 2;
@@ -164,15 +178,18 @@ function mounting_xs() = [-rack_value("ear_width")/2,
                            body_width+rack_value("ear_width")/2];
 function network_key_dims(kind) = kind=="floor" ? [floor_key_width,floor_key_length]
     : assert(kind=="front","Cle inconnue") [front_key_width,front_key_height];
+function switch_reset_center(level) = [
+    switch_x+switch_width-switch_reset_edge-switch_reset_size/2,
+    pcb_top("switch",level)+switch_reset_z+switch_reset_size/2];
 
 assert(side==0 || side==1);
-assert(part=="assembly" || part=="installed" || part=="exploded" || part=="body"
+assert(part=="completed" || part=="installed" || part=="exploded" || part=="floor" || part=="side_panel"
        || part=="front" || part=="floor_key" || part=="front_key"
        || part=="coupon" || part=="key_coupon","Selection inconnue");
 
 module network_validate() {
-    assert(connector_inset>=0 && connector_inset<front_thickness);
-    assert(board_front>front_thickness,"Le bord du PCB doit rester derriere la facade");
+    assert(pcb_front_clearance>=0,"Le PCB ne doit pas traverser la facade");
+    assert(port_overhang>=0 && port_overhang<=board_front,"Les prises ne doivent pas depasser la face exterieure");
     assert(port_chamfer_depth>=0 && port_chamfer_depth<front_thickness);
     assert(port_chamfer_width>=0);
     assert(orange_x+orange_ports_x-port_clearance
@@ -192,8 +209,38 @@ module network_validate() {
     assert(floor_key_start-join_fit>body_front
            && floor_key_start+floor_key_length+join_fit<rear_y-wall);
     assert(front_key_z-join_fit>0 && front_key_z+front_key_height+join_fit<drawer_height);
-    assert(join_x-front_key_width/2-join_fit>orange_x+orange_ports_x+orange_ports_width+port_clearance);
-    assert(join_x+front_key_width/2+join_fit<switch_x+switch_ports_x-port_clearance);
+    assert(front_join_x-front_key_width/2-join_fit
+           >=orange_x+orange_ports_x+orange_ports_width+port_clearance+port_chamfer_width+1,
+           str("Garder 1 mm entre cle de facade et entree Ethernet Orange Pi : jeu=",
+               front_join_x-front_key_width/2-join_fit
+               -(orange_x+orange_ports_x+orange_ports_width+port_clearance+port_chamfer_width),
+               " mm ; front_join_x=",front_join_x,", front_key_width=",front_key_width,
+               ", join_fit=",join_fit,", port_chamfer_width=",port_chamfer_width,
+               ". Nominal : front_join_x=66.5, front_key_width=8. Verifier le Customizer/preset."));
+    assert(front_join_x+front_key_width/2+join_fit+1
+           <=switch_x+switch_led_x-port_clearance-port_chamfer_width,
+           str("Garder 1 mm entre cle de facade et fenetre LED : jeu=",
+               switch_x+switch_led_x-port_clearance-port_chamfer_width
+               -(front_join_x+front_key_width/2+join_fit),
+               " mm ; front_join_x=",front_join_x,", front_key_width=",front_key_width,
+               ", switch_led_x=",switch_led_x,
+               ". Nominal : front_join_x=66.5, front_key_width=8. Verifier le Customizer/preset."));
+    assert(switch_led_x>=0 && switch_led_z>=0 && switch_led_width>0 && switch_led_height>0);
+    assert(switch_led_x+switch_led_width+2*port_clearance+2*port_chamfer_width+1
+           <=switch_ports_x,"Garder 1 mm entre fenetre LED et Ethernet du switch");
+    assert(switch_reset_edge>=0 && switch_reset_z>=0 && switch_reset_size>switch_reset_diameter
+           && switch_reset_diameter>0);
+    assert(switch_ports_x+switch_ports_width+port_clearance+port_chamfer_width+1
+           <=switch_width-switch_reset_edge-switch_reset_size/2
+             -switch_reset_diameter/2-port_clearance-port_chamfer_width,
+           "Garder 1 mm entre Ethernet et acces reset");
+    for(level=[0,1]) {
+        assert(pcb_top("switch",level)+switch_led_z-port_clearance-port_chamfer_width>=1);
+        assert(pcb_top("switch",level)+switch_led_z+switch_led_height
+               +port_clearance+port_chamfer_width<=drawer_height-1);
+        assert(switch_reset_center(level)[1]-switch_reset_diameter/2-port_clearance-port_chamfer_width>=1);
+        assert(switch_reset_center(level)[1]+switch_reset_diameter/2+port_clearance+port_chamfer_width<=drawer_height-1);
+    }
     assert(key_corner_radius>0 && 2*key_corner_radius<
            min(floor_key_width,front_key_width,floor_key_length,front_key_height));
     assert(power_y-power_hole_diameter/2>board_front+switch_depth);
@@ -213,8 +260,8 @@ module network_validate() {
                pcb_bottom(kind,0)+board_envelope(kind));
         assert(post_depth(kind)<floor_thickness+post_height);
         for(p=mounting_holes(kind))
-            assert(board_front+p[1]-post_diameter/2>body_front,
-                   "Le corps du pied doit reposer entierement sur le fond");
+            assert(board_front+p[1]-(post_pilot+0.4)/2-body_front>=1,
+                   "Garder 1 mm entre le meplat avant et l'entree chanfreinee du vissage");
     }
     children();
 }
@@ -252,7 +299,7 @@ module floor_key_pocket() {
 }
 
 module front_key_pocket() {
-    translate([join_x-front_key_width/2,(front_thickness+key_thickness)/2+join_fit,front_key_z])
+    translate([front_join_x-front_key_width/2,(front_thickness+key_thickness)/2+join_fit,front_key_z])
         rotate([90,0,0]) linear_extrude(key_thickness+2*join_fit)
             network_key_outline("front",join_fit);
 }
@@ -274,11 +321,11 @@ module post_bore(depth,pilot=post_pilot) {
         cylinder(d1=pilot,d2=pilot+0.4,h=post_lead+ne);
 }
 
-// Petit meplat sur les bases qui depasseraient l'avant du fond apres encastrement.
-// Au nominal, seul le pied avant droit R1 est concerne (0.15 mm sur la base Ø8).
-module mounted_board_post(kind,p) {
+// Meplat cote facade : base et corps restent entierement sur le fond.
+// Au nominal, pied avant droit R1 : 1.15 mm sur base Ø8, 0.35 mm sur corps Ø6.4.
+module mounted_board_post(kind,p,pilot=post_pilot) {
     intersection() {
-        board_post(post_depth(kind));
+        board_post(post_depth(kind),pilot);
         translate([-post_foot_diameter,body_front-(board_front+p[1]),-ne])
             cube([2*post_foot_diameter,rear_y,post_height+2*ne]);
     }
@@ -305,7 +352,8 @@ module floor_vent_pattern() {
         translate([join_x-joint_support_width/2,0]) square([joint_support_width,rear_y]);
         for(kind=["orange","switch"],p=mounting_holes(kind))
             translate([pcb_x(kind)+p[0],board_front+p[1]])
-                circle(d=post_foot_diameter+2*vent_support_margin);
+                // Eviter une tangence exacte avec un sommet du nid d'abeille.
+                circle(d=post_foot_diameter+2*vent_support_margin+2*ne);
         translate([power_x,power_y]) circle(d=power_hole_diameter+2*vent_power_border);
     }
 }
@@ -331,12 +379,20 @@ module ventilation_cutouts() {
             linear_extrude(wall+2*ne) side_vent_pattern();
 }
 
-module network_body() {
+module wall_floor_tabs(which,clearance=0) {
+    drawer_wall_floor_tabs(which,body_width,wall,body_front,rear_y-wall-join_fit,
+                           floor_thickness,join_fit,clearance);
+}
+
+module wall_front_tabs(which,clearance=0) {
+    drawer_wall_front_tabs(which,body_width,wall,front_thickness,floor_thickness,
+                           join_fit,groove_bottom,groove_height,drawer_height,clearance);
+}
+
+module network_floor() {
     difference() {
         union() {
             translate([0,body_front,0]) cube([body_width,rear_y-body_front,floor_thickness]);
-            for(x=[0,body_width-wall]) translate([x,body_front,0])
-                cube([wall,rear_y-body_front,drawer_height]);
             translate([0,rear_y-wall,0]) cube([body_width,wall,rear_lip_height]);
             for(kind=["orange","switch"],p=mounting_holes(kind))
                 translate([pcb_x(kind)+p[0],board_front+p[1],floor_thickness])
@@ -346,9 +402,7 @@ module network_body() {
                            (floor_thickness-front_tab_thickness)/2])
                     cube([front_tab_width,front_tab_depth+join_fit+ne,front_tab_thickness]);
         }
-        for(x=[-ne,body_width-guide_groove_depth])
-            translate([x,body_front-ne,groove_bottom])
-                cube([guide_groove_depth+ne,rear_y-body_front+2*ne,groove_height]);
+        for(which=[0,1]) wall_floor_tabs(which,join_fit);
         for(kind=["orange","switch"],p=mounting_holes(kind))
             translate([pcb_x(kind)+p[0],board_front+p[1],floor_thickness])
                 post_bore(post_depth(kind));
@@ -358,9 +412,29 @@ module network_body() {
     }
 }
 
+module side_panel_piece(which) {
+    difference() {
+        union() {
+            translate([which==0?0:body_width-wall,body_front,floor_thickness+join_fit])
+                cube([wall,rear_y-wall-join_fit-body_front,drawer_height-floor_thickness-join_fit]);
+            wall_floor_tabs(which);
+            wall_front_tabs(which);
+        }
+        translate([which==0?-ne:body_width-guide_groove_depth,body_front-ne,groove_bottom])
+            cube([guide_groove_depth+ne,rear_y-body_front+2*ne,groove_height]);
+        ventilation_cutouts();
+    }
+}
+
+// Corps assemble, utilise aussi pour les controles d'interferences.
+module network_body() {
+    network_floor();
+    for(which=[0,1]) side_panel_piece(which);
+}
+
 module body_piece(which) {
     intersection() {
-        network_body();
+        network_floor();
         multmatrix([[1,0,0,0],[0,0,1,-ne],[0,1,0,0],[0,0,0,1]])
             linear_extrude(rear_y+2*ne) scarf_profile(which,floor_thickness);
     }
@@ -376,7 +450,7 @@ module network_front_opening() {
         difference() {
             translate([wall+1,1]) square([body_width-2*(wall+1),drawer_height-2]);
             translate([divider-0.5,0]) square([1,drawer_height]);
-            translate([join_x-front_key_width/2-join_fit-1,0])
+            translate([front_join_x-front_key_width/2-join_fit-1,0])
                 square([front_key_width+2*join_fit+2,drawer_height]);
         }
     }
@@ -402,6 +476,14 @@ module orange_port_opening(level) {
     rounded_port(ux,uz,usb_c_plug_width,usb_c_plug_height,usb_c_corner_radius);
 }
 
+module switch_control_openings(level) {
+    rectangular_port(switch_x+switch_led_x-port_clearance,
+                     pcb_top("switch",level)+switch_led_z-port_clearance,
+                     switch_led_width+2*port_clearance,switch_led_height+2*port_clearance);
+    network_front_opening() translate(switch_reset_center(level))
+        circle(d=switch_reset_diameter+2*port_clearance);
+}
+
 module front_fastener_hole(x) {
     translate([x,0,mount_z]) rotate([-90,0,0])
         drawer_mount_bore(front_thickness,head_diameter,head_depth);
@@ -416,6 +498,7 @@ module network_front() {
         translate([-ear,0,0]) cube([body_width+2*ear,front_thickness,drawer_height]);
         for(level=[0,1]) {
             orange_port_opening(level);
+            switch_control_openings(level);
             rectangular_port(switch_x+switch_ports_x-port_clearance,
                 pcb_bottom("switch",level)+switch_port_low()-port_clearance,
                 switch_ports_width+2*port_clearance,
@@ -423,6 +506,7 @@ module network_front() {
         }
         for(x=mounting_xs()) front_fastener_hole(x);
         front_key_pocket();
+        for(which=[0,1]) wall_front_tabs(which,join_fit);
         for(x=front_tab_x)
             translate([x-front_tab_width/2-join_fit,front_thickness-front_tab_depth-join_fit,
                        (floor_thickness-front_tab_thickness)/2-join_fit])
@@ -435,14 +519,14 @@ module front_piece(which) {
     intersection() {
         network_front();
         translate([0,0,-ne]) linear_extrude(drawer_height+2*ne)
-            scarf_profile(which,front_thickness);
+            scarf_profile(which,front_thickness,front_join_x);
     }
 }
 
 module network_keys(explode=0) {
     translate([join_x-floor_key_width/2,floor_key_start,(floor_thickness-key_thickness)/2])
         network_key("floor");
-    translate([join_x-front_key_width/2,(front_thickness+key_thickness)/2-explode,front_key_z])
+    translate([front_join_x-front_key_width/2,(front_thickness+key_thickness)/2-explode,front_key_z])
         rotate([90,0,0]) network_key("front");
 }
 
@@ -451,6 +535,8 @@ module network_tray(explode=0) {
         color(which==0?"#84aaa1":"#9db4cb") body_piece(which);
         color("#416886") translate([0,-explode,0]) front_piece(which);
     }
+    for(which=[0,1]) translate([which==0?-2*explode:2*explode,0,explode])
+        color("#7199ac") side_panel_piece(which);
     color("#d0aa65") network_keys(explode);
 }
 
@@ -525,6 +611,17 @@ module network_references(boards=show_boards,hardware=show_hardware,envelopes=sh
     if(boards) {
         %color("#50764b") network_pcbs();
         %color("#aeb4ba") network_ports();
+        // Symboles de face (epaisseur illustrative 0.2), pas des boitiers 3D mesures.
+        for(level=[0,1]) {
+            %color("#73d66b") translate([switch_x+switch_led_x,board_front,
+                                        pcb_top("switch",level)+switch_led_z])
+                cube([switch_led_width,.2,switch_led_height]);
+            c=switch_reset_center(level);
+            %color("#555555") translate([c[0]-switch_reset_size/2,board_front,c[1]-switch_reset_size/2])
+                cube([switch_reset_size,.2,switch_reset_size]);
+            %color("#e0aa55") translate([c[0],board_front-.02,c[1]]) rotate([-90,0,0])
+                cylinder(d=switch_reset_diameter,h=.2);
+        }
     }
     if(envelopes) %color([0.6,0.8,0.6,0.3]) network_envelopes();
     if(hardware) %color("#c9aa68") network_standoffs();
@@ -535,7 +632,7 @@ module mounting_coupon() {
         union() {
             cube([54,16,floor_thickness]);
             for(i=[0:2]) translate([9+18*i,8,floor_thickness])
-                board_post(post_depth("orange"),2.1+0.1*i);
+                mounted_board_post("orange",mounting_holes("orange")[1],2.1+0.1*i);
         }
         for(i=[0:2]) {
             translate([9+18*i,8,floor_thickness]) post_bore(post_depth("orange"),2.1+0.1*i);
@@ -580,7 +677,11 @@ module network_dimensions() {
     echo("Tiroir : largeur corps, profondeur totale, hauteur",[body_width,rear_y,drawer_height]);
     echo("Largeur interieure",body_width-2*wall);
     echo("PCBs : X Orange Pi / switch, Y avant",[orange_x,switch_x,board_front]);
+    echo("Jeu PCB / face interieure",pcb_front_clearance);
     echo("Encastrement des extremites USB-C/Ethernet",front_thickness-(board_front-port_overhang));
+    echo("Fenetres LED : largeur/hauteur utiles",[switch_led_width+2*port_clearance,switch_led_height+2*port_clearance]);
+    echo("Acces reset : diametre, centres X/Z",[switch_reset_diameter+2*port_clearance,
+         [for(level=[0,1]) switch_reset_center(level)]]);
     echo("Hauteur maximale Orange Pi / switch",[
         pcb_bottom("orange",1)+board_envelope("orange"),
         pcb_bottom("switch",1)+board_envelope("switch")]);
@@ -594,15 +695,18 @@ module network_dimensions() {
 // Export sous la configuration active de l'appelant, comme la vue installed.
 module network_export(selection,which=0) {
     assert(which==0 || which==1);
-    assert(selection=="body" || selection=="front" || selection=="floor_key"
+    assert(selection=="floor" || selection=="side_panel" || selection=="front" || selection=="floor_key"
            || selection=="front_key" || selection=="coupon" || selection=="key_coupon",
            "Piece reseau inconnue");
     network_validate() {
-        if(selection=="body")
+        if(selection=="floor")
             translate([which==0?0:-(join_x-floor_thickness/2+join_fit/2),
-                       -front_thickness+front_tab_depth,0]) body_piece(which);
+                        -front_thickness+front_tab_depth,0]) body_piece(which);
+        if(selection=="side_panel")
+            drawer_wall_flat(which,body_width,wall,front_thickness,floor_thickness)
+                side_panel_piece(which);
         if(selection=="front")
-            multmatrix([[1,0,0,which==0?ear:-(join_x-front_thickness/2+join_fit/2)],
+            multmatrix([[1,0,0,which==0?ear:-(front_join_x-front_thickness/2+join_fit/2)],
                         [0,0,1,0],[0,-1,0,front_thickness],[0,0,0,1]]) front_piece(which);
         if(selection=="floor_key") network_key("floor");
         if(selection=="front_key") network_key("front");
@@ -613,12 +717,12 @@ module network_export(selection,which=0) {
 
 // Les validations s'appliquent aussi aux exports individuels du Customizer.
 rack_validate() network_validate() {
-    if(part=="assembly") { network_tray(); network_references(); network_dimensions(); }
+    if(part=="completed") { network_tray(); network_references(); network_dimensions(); }
     if(part=="installed") {
         %assembly();
         network_install() { network_tray(); network_references(); }
         network_dimensions();
     }
-    if(part=="exploded") { network_tray(18); network_references(); }
-    if(part!="assembly" && part!="installed" && part!="exploded") network_export(part,side);
+    if(part=="exploded") network_tray(18);
+    if(part!="completed" && part!="installed" && part!="exploded") network_export(part,side);
 }

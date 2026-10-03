@@ -1,8 +1,10 @@
 // Tiroir alimentation + 6x Orange Pi Zero 3 pour sbc-rack.scad, mm. PLA, colle.
 // X=largeur du corps, Y=profondeur depuis la face avant, Z=bas du tiroir.
-// Imprimer body side=0/1, front side=0/1, une floor_key et une front_key : six pieces.
-// Jamais assembly/installed. Assembler les fonds autour de leur cle, puis les facades.
-// Coller la facade sur les languettes du fond et les chants des parois, hors du boitier.
+// Imprimer floor, side_panel, front avec side=0/1, puis floor_key et front_key : huit pieces.
+// Jamais completed/exploded/installed. Assembler les fonds autour de leur cle, puis les facades.
+// Coller les fonds autour de leur cle, inserer les flancs par le haut, puis enfiler
+// la facade sur les languettes du fond et des flancs, hors du boitier.
+// Les flancs s'impriment a plat, rainures vers le haut ; rebord arriere integre au fond.
 // Tester coupon avant de visser les entretoises M2.5 directement dans le PLA.
 // Le coupon teste aussi les lamages de facade ; verifier dans le slicer les
 // ponts des logements internes et les meplats des pieds avant.
@@ -19,9 +21,11 @@
 // exporter depuis sbc-rack.scad avec part="module_export", module_name="power".
 use <sbc-rack-core.scad>
 
+/* [Selection] */
+part = "completed"; // [completed,exploded,installed,floor,side_panel,front,floor_key,front_key,coupon,key_coupon]
+// Vu de face : 0=gauche, 1=droite pour floor/side_panel/front. Cles et coupons entiers.
+side = 0; // [0:Gauche,1:Droite]
 /* [Affichage] */
-part = "assembly"; // [assembly,installed,exploded,body,front,floor_key,front_key,coupon,key_coupon]
-side = 0; // [0,1]
 show_boards = true;
 show_envelopes = false;
 show_hardware = true;
@@ -32,7 +36,7 @@ slot_index = 3; // sous le tiroir reseau (slot 4), numerotation depuis zero
 floor_thickness = 3;
 rear_lip_height = 8;
 front_edge_clearance = 0.2;
-join_fit = 0.15; // jeu total de collage, a calibrer en PLA
+join_fit = 0.15; // jeu total des coupes, par face des logements ; a calibrer en PLA
 join_x = 142.8; // jonction de facade entre RJ45 central et logement HDMI droit
 board_edge_clearance = 1;
 col_gap_side = 1; // entre colonnes 0-1
@@ -72,7 +76,10 @@ usb_c_plug_height = 11;
 usb_c_corner_radius = 1;
 rj45_plug_width = 17.5; // fiche + boot, a valider sur les cordons reels
 rj45_plug_height = 15;
-front_cable_diameter = 25;
+rj45_corner_radius = 1; // petit rayon pour conserver le passage des connecteurs
+front_cable_width = 25;
+front_cable_height = 30; // passage vertical, largeur limitee par les cartes voisines
+front_cable_radius = 3;
 front_cable_clearance = 1; // minimum paroi / PCB / entretoise autour du passage
 port_chamfer_depth = 3; // profondeur depuis la face exterieure, reste 1 mm droit
 port_chamfer_width = 1; // evasement par bord, limite pres des parois et cles
@@ -170,13 +177,14 @@ function power_top(level) = power_bottom(level)+power_pcb;
 function post_depth(pcb) = standoff_thread-pcb+thread_tip_clearance;
 function mounting_xs() = [-rack_value("ear_width")/2,
                           body_width+rack_value("ear_width")/2];
-function front_cable_xs() = let(x=wall+front_cable_clearance+front_cable_diameter/2)
+// Inclure le jeu des logements de languettes dans la reserve laterale.
+function front_cable_xs() = let(x=wall+join_fit+front_cable_clearance+front_cable_width/2)
     [x,body_width-x];
 function power_key_dims(kind) = kind=="floor" ? [floor_key_width,floor_key_length]
     : assert(kind=="front","Cle inconnue") [front_key_width,front_key_height];
 
 assert(side==0 || side==1);
-assert(part=="assembly" || part=="installed" || part=="exploded" || part=="body"
+assert(part=="completed" || part=="installed" || part=="exploded" || part=="floor" || part=="side_panel"
        || part=="front" || part=="floor_key" || part=="front_key"
        || part=="coupon" || part=="key_coupon","Selection inconnue");
 
@@ -217,10 +225,11 @@ module power_validate() {
            <zero_col_x(2)+zero_port_box("hdmi")[0][0]-zero_model_clearance,
            "Garder 1 mm entre cle de facade et logement HDMI droit");
     assert(col_gap_side>=1 && col_gap_mid>=1);
-    assert(front_cable_diameter>0 && front_cable_clearance>=1);
-    assert(drawer_height/2-front_cable_diameter/2>=floor_thickness+post_height+front_cable_clearance);
+    assert(front_cable_width>0 && front_cable_height>0 && front_cable_clearance>=1);
+    assert(front_cable_radius>0 && 2*front_cable_radius<min(front_cable_width,front_cable_height));
+    assert(drawer_height/2-front_cable_height/2>=floor_thickness+post_height+front_cable_clearance);
     for(which=[0,1]) {
-        edge=front_cable_xs()[which]+(which==0?1:-1)*front_cable_diameter/2;
+        edge=front_cable_xs()[which]+(which==0?1:-1)*front_cable_width/2;
         pcb_edge=zero_col_x(which==0?0:2)+(which==0?0:zero_width);
         post_edge=zero_col_x(which==0?0:2)
             +(which==0?min([for(p=zero_holes()) p[0]]):max([for(p=zero_holes()) p[0]]))
@@ -229,7 +238,7 @@ module power_validate() {
                str("Passage de cables trop proche du PCB (",which==0?"gauche":"droite",
                    ") : jeu=",(which==0?1:-1)*(pcb_edge-edge),
                    " mm, minimum=",front_cable_clearance,
-                   " mm ; diametre=",front_cable_diameter,
+                   " mm ; largeur=",front_cable_width,
                    ", espaces colonnes=",[col_gap_side,col_gap_mid],
                    ", largeur corps=",body_width,", paroi=",wall,
                    ". Verifier les valeurs actives du Customizer/preset."));
@@ -247,6 +256,7 @@ module power_validate() {
     assert(rj45_plug_width>=zero_port_size("rj45")[0]+2*port_clearance
            && rj45_plug_height>=zero_port_size("rj45")[2]+2*port_clearance);
     assert(usb_c_corner_radius>0 && 2*usb_c_corner_radius<=min(usb_c_plug_width,usb_c_plug_height));
+    assert(rj45_corner_radius>0 && 2*rj45_corner_radius<min(rj45_plug_width,rj45_plug_height));
     assert(connector_inset>=0 && connector_inset<front_thickness);
     assert(pcb_front_y+min([for(p=zero3_connectors()) p[1][0][1]])
            -zero_model_clearance>=2,"Garder au moins 2 mm devant les logements borgnes");
@@ -374,12 +384,20 @@ module ventilation_cutouts() {
             linear_extrude(wall+2*ne) side_vent_pattern();
 }
 
-module power_body() {
+module wall_floor_tabs(which,clearance=0) {
+    drawer_wall_floor_tabs(which,body_width,wall,body_front,rear_lip_y-join_fit,
+                           floor_thickness,join_fit,clearance);
+}
+
+module wall_front_tabs(which,clearance=0) {
+    drawer_wall_front_tabs(which,body_width,wall,front_thickness,floor_thickness,
+                           join_fit,groove_bottom,groove_height,drawer_height,clearance);
+}
+
+module power_floor() {
     difference() {
         union() {
             translate([0,body_front,0]) cube([body_width,rear_lip_y-body_front,floor_thickness]);
-            for(x=[0,body_width-wall]) translate([x,body_front,0])
-                cube([wall,rear_lip_y-body_front,drawer_height]);
             translate([0,rear_lip_y,0]) cube([body_width,wall,rear_lip_height]);
             // A 1 mm entre PCB, les supports voisins fusionnent ; trous de vissage distincts.
             for(i=[0:2],p=zero_holes())
@@ -393,9 +411,7 @@ module power_body() {
                            (floor_thickness-front_tab_thickness)/2])
                     cube([front_tab_width,front_tab_depth+join_fit+ne,front_tab_thickness]);
         }
-        for(x=[-ne,body_width-guide_groove_depth])
-            translate([x,body_front-ne,groove_bottom])
-                cube([guide_groove_depth+ne,rear_lip_y-body_front+2*ne,groove_height]);
+        for(which=[0,1]) wall_floor_tabs(which,join_fit);
         for(i=[0:2],p=zero_holes())
             translate([zero_col_x(i)+p[0],pcb_front_y+p[1],floor_thickness])
                 post_bore(post_depth(zero_pcb));
@@ -407,9 +423,29 @@ module power_body() {
     }
 }
 
+module side_panel_piece(which) {
+    difference() {
+        union() {
+            translate([which==0?0:body_width-wall,body_front,floor_thickness+join_fit])
+                cube([wall,rear_lip_y-join_fit-body_front,drawer_height-floor_thickness-join_fit]);
+            wall_floor_tabs(which);
+            wall_front_tabs(which);
+        }
+        translate([which==0?-ne:body_width-guide_groove_depth,body_front-ne,groove_bottom])
+            cube([guide_groove_depth+ne,rear_lip_y-body_front+2*ne,groove_height]);
+        ventilation_cutouts();
+    }
+}
+
+// Corps assemble, utilise aussi pour les controles d'interferences.
+module power_body() {
+    power_floor();
+    for(which=[0,1]) side_panel_piece(which);
+}
+
 module body_piece(which) {
     intersection() {
-        power_body();
+        power_floor();
         multmatrix([[1,0,0,0],[0,0,1,-ne],[0,1,0,0],[0,0,0,1]])
             linear_extrude(rear_y+2*ne) scarf_profile(which,floor_thickness,floor_join_x);
     }
@@ -419,16 +455,12 @@ module power_front_opening() {
     drawer_front_opening(front_thickness,port_chamfer_depth,port_chamfer_width) {
         children();
         difference() {
-            translate([wall+front_cable_clearance,1])
-                square([body_width-2*(wall+front_cable_clearance),drawer_height-2]);
+            translate([wall+join_fit+front_cable_clearance,1])
+                square([body_width-2*(wall+join_fit+front_cable_clearance),drawer_height-2]);
             translate([join_x-front_key_width/2-join_fit-1,0])
                 square([front_key_width+2*join_fit+2,drawer_height]);
         }
     }
-}
-
-module rectangular_port(x,z,w,h) {
-    power_front_opening() translate([x,z]) square([w,h]);
 }
 
 module rounded_port(x,z,w,h,r) {
@@ -443,7 +475,7 @@ module zero_port_openings(col,level) {
     rounded_port(ux,uz,usb_c_plug_width,usb_c_plug_height,usb_c_corner_radius);
     ex=zero_col_x(col)+ec[0]-rj45_plug_width/2;
     ez=zero_bottom(level)+ec[2]-rj45_plug_height/2;
-    rectangular_port(ex,ez,rj45_plug_width,rj45_plug_height);
+    rounded_port(ex,ez,rj45_plug_width,rj45_plug_height,rj45_corner_radius);
 }
 
 module front_fastener_hole(x) {
@@ -483,11 +515,12 @@ module power_front() {
         translate([-ear,0,0]) cube([body_width+2*ear,front_thickness,drawer_height]);
         for(col=[0:2],level=[0,1]) zero_port_openings(col,level);
         for(x=front_cable_xs())
-            power_front_opening() translate([x,drawer_height/2])
-                circle(d=front_cable_diameter,$fn=96);
+            rounded_port(x-front_cable_width/2,(drawer_height-front_cable_height)/2,
+                         front_cable_width,front_cable_height,front_cable_radius);
         zero_front_recesses();
         for(x=mounting_xs()) front_fastener_hole(x);
         front_key_pocket();
+        for(which=[0,1]) wall_front_tabs(which,join_fit);
         for(x=front_tab_x)
             translate([x-front_tab_width/2-join_fit,front_thickness-front_tab_depth-join_fit,
                        (floor_thickness-front_tab_thickness)/2-join_fit])
@@ -516,6 +549,8 @@ module power_tray(explode=0) {
         color(which==0?"#84aaa1":"#9db4cb") body_piece(which);
         color("#416886") translate([0,-explode,0]) front_piece(which);
     }
+    for(which=[0,1]) translate([which==0?-2*explode:2*explode,0,explode])
+        color("#7199ac") side_panel_piece(which);
     color("#d0aa65") power_keys(explode);
 }
 
@@ -675,8 +710,8 @@ module power_dimensions() {
     echo("Tiroir : largeur corps, profondeur totale, hauteur",[body_width,rear_y,drawer_height]);
     echo("Largeur interieure",body_width-2*wall);
     echo("Colonnes Zero 3 : X, Y avant PCB",[[for(i=[0:2]) zero_col_x(i)],pcb_front_y]);
-    echo("Passages de cables : diametre, centres X, centre Z",
-         [front_cable_diameter,front_cable_xs(),drawer_height/2]);
+    echo("Passages de cables : largeur/hauteur, rayon, centres X, centre Z",
+         [[front_cable_width,front_cable_height],front_cable_radius,front_cable_xs(),drawer_height/2]);
     echo("Jonctions fond / facade : X",[floor_join_x,join_x]);
     echo("Encastrement des extremites USB-C / RJ45",[for(n=["usb_c","rj45"])
          front_thickness-(pcb_front_y+zero_port_box(n)[0][1])]);
@@ -693,13 +728,16 @@ module power_dimensions() {
 
 module power_export(selection,which=0) {
     assert(which==0 || which==1);
-    assert(selection=="body" || selection=="front" || selection=="floor_key"
+    assert(selection=="floor" || selection=="side_panel" || selection=="front" || selection=="floor_key"
            || selection=="front_key" || selection=="coupon" || selection=="key_coupon",
            "Piece alimentation inconnue");
     power_validate() {
-        if(selection=="body")
+        if(selection=="floor")
             translate([which==0?0:-(floor_join_x-floor_thickness/2+join_fit/2),
-                       -front_thickness+front_tab_depth,0]) body_piece(which);
+                        -front_thickness+front_tab_depth,0]) body_piece(which);
+        if(selection=="side_panel")
+            drawer_wall_flat(which,body_width,wall,front_thickness,floor_thickness)
+                side_panel_piece(which);
         if(selection=="front")
             multmatrix([[1,0,0,which==0?ear:-(join_x-front_thickness/2+join_fit/2)],
                         [0,0,1,0],[0,-1,0,front_thickness],[0,0,0,1]]) front_piece(which);
@@ -712,12 +750,12 @@ module power_export(selection,which=0) {
 
 // Les validations s'appliquent aussi aux exports individuels du Customizer.
 rack_validate() power_validate() {
-    if(part=="assembly") { power_tray(); power_references(); power_dimensions(); }
+    if(part=="completed") { power_tray(); power_references(); power_dimensions(); }
     if(part=="installed") {
         %assembly();
         power_install() { power_tray(); power_references(); }
         power_dimensions();
     }
-    if(part=="exploded") { power_tray(18); power_references(); }
-    if(part!="assembly" && part!="installed" && part!="exploded") power_export(part,side);
+    if(part=="exploded") power_tray(18);
+    if(part!="completed" && part!="installed" && part!="exploded") power_export(part,side);
 }
